@@ -75,8 +75,6 @@ mouse_game_lock = threading.Lock()
 
 # =========================================================
 # KEY STORAGE
-# second script is prioritised here
-# Format: {"16_digit_key": expiration_timestamp}
 # =========================================================
 
 active_keys = {}
@@ -180,7 +178,6 @@ def reset_mouse_game_state():
 
 # =========================================================
 # KEY HELPERS
-# second script prioritised
 # =========================================================
 
 def cleanup_expired_keys():
@@ -726,8 +723,7 @@ def mouse_move():
     update_mouse_game_state(mouse_x=x, mouse_y=y)
     return jsonify({"ok": True})
 
-# Prioritised from the second script:
-# always generate a fresh 16-digit key and store it for 5 minutes
+
 @app.route("/generate", methods=["POST", "GET"])
 def generate_key():
     cleanup_expired_keys()
@@ -741,7 +737,7 @@ def generate_key():
 
     return jsonify({"key": new_key, "expires_in_minutes": 5}), 200
 
-# Prioritised from the second script
+
 @app.route("/validate", methods=["POST"])
 def validate_key():
     cleanup_expired_keys()
@@ -760,8 +756,7 @@ def validate_key():
     print(f"[REJECTED] Invalid key attempted: {client_key}")
     return jsonify({"valid": False, "message": "Invalid or expired key."}), 401
 
-# Optional helper route:
-# returns the key produced by the sobriety flow only if the test was passed
+
 @app.route("/test-key", methods=["GET"])
 def test_key():
     state = get_state_copy()
@@ -771,7 +766,6 @@ def test_key():
 
     return jsonify({"ok": False, "message": "Tests not passed yet."}), 403
 
-# =========================================================
 
 if __name__ == "__main__":
     reset_test_state()
