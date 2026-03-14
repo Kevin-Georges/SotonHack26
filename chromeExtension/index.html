@@ -235,6 +235,8 @@
     </div>
 
     <script>
+        const API_BASE = "http://127.0.0.1:2600";
+
         const startBtn = document.getElementById("startBtn");
         const statusMsg = document.getElementById("statusMsg");
         const phaseEl = document.getElementById("phase");
@@ -255,7 +257,6 @@
 
         let poller = null;
         let mousePoller = null;
-        let latestMouseState = null;
         let lastSentMouse = { x: 450, y: 250 };
 
         function clearCanvas() {
@@ -322,9 +323,12 @@
 
         async function fetchMouseState() {
             try {
-                const response = await fetch("/mouse-state");
+                const response = await fetch(`${API_BASE}/mouse-state`);
+                if (!response.ok) {
+                    throw new Error(`mouse-state failed: ${response.status}`);
+                }
+
                 const data = await response.json();
-                latestMouseState = data;
                 drawMouseGame(data);
             } catch (err) {
                 mouseCanvasStatus.innerText = "Could not fetch mouse game state.";
@@ -348,7 +352,7 @@
             lastSentMouse = { x, y };
 
             try {
-                await fetch("/mouse-move", {
+                await fetch(`${API_BASE}/mouse-move`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -381,25 +385,35 @@
             clearCanvas();
             startMousePolling();
 
-            const response = await fetch("/start-test", {
-                method: "POST"
-            });
+            try {
+                const response = await fetch(`${API_BASE}/start-test`, {
+                    method: "POST"
+                });
 
-            const data = await response.json();
+                const data = await response.json();
 
-            if (!data.ok) {
-                statusMsg.innerText = data.message || "Could not start test.";
-                return;
+                if (!response.ok || !data.ok) {
+                    statusMsg.innerText = data.message || "Could not start test.";
+                    stopMousePolling();
+                    return;
+                }
+
+                startBtn.disabled = true;
+                statusMsg.innerText = "Test started.";
+                startPolling();
+            } catch (err) {
+                statusMsg.innerText = "Could not start test.";
+                stopMousePolling();
             }
-
-            startBtn.disabled = true;
-            statusMsg.innerText = "Test started.";
-            startPolling();
         }
 
         async function fetchStatus() {
             try {
-                const response = await fetch("/status");
+                const response = await fetch(`${API_BASE}/status`);
+                if (!response.ok) {
+                    throw new Error(`status failed: ${response.status}`);
+                }
+
                 const data = await response.json();
 
                 phaseEl.innerText = data.phase || "unknown";
@@ -455,7 +469,6 @@
                     stopMousePolling();
                     startBtn.disabled = false;
                 }
-
             } catch (err) {
                 statusMsg.innerText = "Could not fetch status.";
                 mouseCanvasStatus.innerText = "Could not fetch test status.";
