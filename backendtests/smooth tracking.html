@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Impulse Guard - Phase 1</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1e272e; color: #fff;
+      display: flex; flex-direction: column; align-items: center;
+      margin: 0; padding: 40px 20px;
+      user-select: none; 
+    }
+
+    h1 { color: #0fbcf9; margin: 0 0 10px 0; }
+    p { color: #808e9b; margin-top: 0; font-size: 18px; }
+
+    #game-box {
+      width: 600px; height: 400px;
+      background-color: #2d3436; border: 4px solid #485460;
+      border-radius: 12px; position: relative; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      cursor: crosshair;
+    }
+
+    /* THE BIGGER TARGET */
+    #target {
+      width: 100px; height: 100px; /* Doubled the size */
+      background-color: #ff3f34; border-radius: 50%;
+      position: absolute; top: 0; left: 0;
+      box-shadow: 0 0 15px rgba(255, 63, 52, 0.5);
+      will-change: transform;
+    }
+
+    #target.hit {
+      background-color: #0be881;
+      box-shadow: 0 0 20px rgba(11, 232, 129, 0.8);
+    }
+
+    #menu-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(30, 39, 46, 0.95);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      z-index: 10;
+    }
+
+    button {
+      background-color: #0fbcf9; color: #1e272e; border: none;
+      padding: 15px 40px; font-size: 22px; font-weight: bold;
+      border-radius: 8px; cursor: pointer; transition: 0.2s;
+      margin-top: 15px;
+    }
+    button:hover { filter: brightness(1.15); transform: scale(1.05); }
+    
+    #next-btn { background-color: #0be881; display: none; }
+
+    .stats {
+      width: 600px; display: flex; justify-content: space-between;
+      margin-top: 15px; font-size: 20px; font-weight: bold; color: #d2dae2;
+    }
+
+    #message { font-size: 24px; margin-bottom: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <h1>Phase 1: Motor Control</h1>
+  <p>Hover your cursor inside the moving circle for 10 seconds.</p>
+
+  <div id="game-box">
+    <div id="target" style="display: none;"></div>
+    
+    <div id="menu-overlay">
+      <div id="message">Requires 60% Accuracy</div>
+      <button id="start-btn">Start Test</button>
+      <button id="next-btn">Proceed to Phase 2 ➔</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div>Time: <span id="time-left" style="color:#0fbcf9;">10.0</span>s</div>
+    <div>Accuracy: <span id="accuracy">0</span>%</div>
+  </div>
+
+  <script>
+    // --- SETTINGS ---
+    const GAME_TIME = 10; 
+    const PASS_SCORE = 60; 
+    const TARGET_RADIUS = 50; // Increased to match the new 100px width
+
+    // --- VARIABLES ---
+    let gameActive = false;
+    let timeElapsedMs = 0;
+    let timeHoveredMs = 0;
+    let lastTimestamp = 0;
+    
+    // Physics
+    let x = 300; let y = 200;
+    let vx = 0; let vy = 0;
+    
+    // Global Mouse Tracking
+    let globalMouseX = 0; 
+    let globalMouseY = 0;
+
+    // --- ELEMENTS ---
+    const box = document.getElementById('game-box');
+    const target = document.getElementById('target');
+    const overlay = document.getElementById('menu-overlay');
+    const startBtn = document.getElementById('start-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const msg = document.getElementById('message');
+    const timeText = document.getElementById('time-left');
+    const accText = document.getElementById('accuracy');
+
+    // Track mouse globally across the whole window
+    document.addEventListener('mousemove', (e) => {
+      globalMouseX = e.clientX;
+      globalMouseY = e.clientY;
+    });
+
+    // --- GAME LOGIC ---
+    startBtn.addEventListener('click', () => {
+      gameActive = true;
+      timeElapsedMs = 0;
+      timeHoveredMs = 0;
+      x = box.clientWidth / 2;
+      y = box.clientHeight / 2;
+      
+      // SLOWER SPEED: Calculates movement in pixels per millisecond (approx 0.15 to 0.25)
+      vx = (Math.random() > 0.5 ? 1 : -1) * (0.15 + Math.random() * 0.1);
+      vy = (Math.random() > 0.5 ? 1 : -1) * (0.15 + Math.random() * 0.1);
+
+      overlay.style.display = 'none';
+      target.style.display = 'block';
+      startBtn.innerText = "Try Again"; 
+
+      // Start the smooth animation loop
+      lastTimestamp = performance.now();
+      requestAnimationFrame(updateEngine);
+    });
+
+    function updateEngine(timestamp) {
+      if (!gameActive) return;
+
+      // Calculate time passed since the last frame (Delta Time)
+      const deltaTime = timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
+      timeElapsedMs += deltaTime;
+
+      // 1. Move the Target (Speed * Time = perfectly smooth movement regardless of monitor refresh rate)
+      x += vx * deltaTime;
+      y += vy * deltaTime;
+
+      // Bounce off walls
+      if (x - TARGET_RADIUS <= 0 || x + TARGET_RADIUS >= box.clientWidth) vx *= -1;
+      if (y - TARGET_RADIUS <= 0 || y + TARGET_RADIUS >= box.clientHeight) vy *= -1;
+
+      target.style.transform = `translate(${x - TARGET_RADIUS}px, ${y - TARGET_RADIUS}px)`;
+
+      // 2. Hit Detection
+      const targetRect = target.getBoundingClientRect();
+      const targetCenterX = targetRect.left + TARGET_RADIUS;
+      const targetCenterY = targetRect.top + TARGET_RADIUS;
+
+      const distance = Math.hypot(targetCenterX - globalMouseX, targetCenterY - globalMouseY);
+      
+      if (distance <= TARGET_RADIUS) {
+        timeHoveredMs += deltaTime;
+        target.classList.add('hit');
+      } else {
+        target.classList.remove('hit');
+      }
+
+      // 3. Update Text
+      const timeLeft = Math.max(0, GAME_TIME - (timeElapsedMs / 1000));
+      timeText.innerText = timeLeft.toFixed(1);
+      
+      const currentAcc = (timeHoveredMs / timeElapsedMs) * 100;
+      accText.innerText = currentAcc.toFixed(1);
+
+      // 4. Check End Game
+      if (timeLeft <= 0) {
+        gameActive = false;
+        endGame(currentAcc);
+      } else {
+        // Keep looping smoothly
+        requestAnimationFrame(updateEngine);
+      }
+    }
+
+    function endGame(finalAcc) {
+      target.style.display = 'none';
+      overlay.style.display = 'flex';
+
+      if (finalAcc >= PASS_SCORE) {
+        msg.innerText = `Passed! Accuracy: ${finalAcc.toFixed(1)}%`;
+        msg.style.color = "#0be881";
+        startBtn.style.display = "none";
+        nextBtn.style.display = "block";
+      } else {
+        msg.innerText = `Failed: ${finalAcc.toFixed(1)}%. Need ${PASS_SCORE}%.`;
+        msg.style.color = "#ff3f34";
+      }
+    }
+
+    // Pass to Phase 2
+    nextBtn.addEventListener('click', () => {
+      window.location.href = "reaction-test.html";
+    });
+  </script>
+</body>
+</html>
