@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; width: 250px; padding: 15px; text-align: center; }
+    input { width: 90%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+    
+    /* Primary Unlock Button */
+    #unlockBtn { background-color: #2ed573; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; }
+    #unlockBtn:hover { background-color: #7bed9f; }
+    
+    /* Secondary Lock Button */
+    #lockBtn { background-color: #ff4757; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+    #lockBtn:hover { background-color: #ff6b81; }
+    
+    #status { margin-top: 10px; font-size: 12px; color: #555; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Impulse Guard</h2>
+  <input type="text" id="apiKeyInput" placeholder="Enter Unlock Key (e.g. IG-123)">
+  
+  <button id="unlockBtn">Unlock Checkout</button>
+  <button id="lockBtn">Manually Lock Cart</button>
+  
+  <div id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

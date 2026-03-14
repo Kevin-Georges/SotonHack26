@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Impulse Guard",
+  "version": "1.0",
+  "description": "Your late-night sobriety checkpoint for online shopping.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Unlock Cart"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.amazon.com/*",
+        "*://*.amazon.co.uk/*"
+      ],
+      "js": ["content.js"]
+    }
+  ]
+}
