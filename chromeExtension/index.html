@@ -3,74 +3,483 @@
 <head>
     <title>Impulse Guard - Sobriety Test</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; background-color: #f4f4f9;}
-        .container { background: white; border-radius: 12px; padding: 40px; width: 350px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #ff4757; margin-top: 0; }
-        input { padding: 10px; width: 80%; margin: 15px 0; border: 2px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center;}
-        button { background: #3742fa; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 90%;}
-        button:hover { background: #2f35cc; }
-        #keyDisplay { font-size: 22px; font-weight: bold; color: #2ed573; margin-top: 25px; letter-spacing: 2px; }
-        #errorMsg { color: #ff4757; font-weight: bold; display: none; margin-top: 15px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+
+        .page {
+            display: flex;
+            gap: 24px;
+            padding: 32px;
+            box-sizing: border-box;
+            min-height: 100vh;
+        }
+
+        .left-panel {
+            flex: 0 0 520px;
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            align-self: flex-start;
+        }
+
+        .right-panel {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-height: 700px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        h2 {
+            color: #ff4757;
+            margin-top: 0;
+            text-align: center;
+            font-size: 40px;
+        }
+
+        p.top-text {
+            text-align: center;
+            font-size: 18px;
+            line-height: 1.4;
+        }
+
+        button {
+            background: #3742fa;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        button:hover {
+            background: #2f35cc;
+        }
+
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .status-main {
+            margin-top: 14px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .card {
+            margin-top: 20px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        #keyDisplay {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2ed573;
+            margin-top: 25px;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        #resultBox {
+            display: none;
+        }
+
+        .pass {
+            color: #2ed573;
+            font-weight: bold;
+        }
+
+        .fail {
+            color: #ff4757;
+            font-weight: bold;
+        }
+
+        .muted {
+            color: #666;
+            font-size: 14px;
+        }
+
+        #sentenceBox, #transcriptBox {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .right-title {
+            position: absolute;
+            top: 18px;
+            left: 24px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #mousePanelWrap {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        #mouseCanvas {
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background: black;
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #mouseCanvasStatus,
+        #mouseCanvasAccuracy {
+            font-size: 18px;
+            text-align: center;
+        }
+
+        @media (max-width: 1100px) {
+            .page {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                flex: none;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .right-panel {
+                min-height: 450px;
+            }
+
+            #mouseCanvas {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="page">
+        <div class="left-panel">
+            <h2>Sobriety Checkpoint</h2>
 
-    <div class="container">
-        <h2>Sobriety Checkpoint</h2>
-        <p>To get your unlock key, prove you are thinking clearly. What is <b>15 + 27</b>?</p>
-        
-        <input type="text" id="answerInput" placeholder="Enter answer">
-        <button id="submitBtn">Submit Answer</button>
-        
-        <p id="errorMsg">Wrong! Put the credit card down.</p>
-        
-        <div id="keyDisplay"></div>
-        <p id="instructions" style="display:none; font-size: 12px; color: #666; margin-top: 10px;">
-            Copy this key and paste it into the Impulse Guard extension! (Expires in 5 mins)
-        </p>
+            <p class="top-text">
+                Click below to begin the full sobriety test.
+                You must pass both the speech and mouse tracking tests.
+            </p>
+
+            <button id="startBtn">Start Sobriety Test</button>
+
+            <div id="statusMsg" class="status-main">Waiting to start.</div>
+
+            <div class="card" id="liveBox">
+                <div><span class="label">Phase:</span> <span id="phase">idle</span></div>
+
+                <div style="margin-top: 8px;"><span class="label">Sentence to read:</span></div>
+                <div id="sentenceBox" class="muted">No sentence yet.</div>
+
+                <div style="margin-top: 12px;"><span class="label">Detected transcript:</span></div>
+                <div id="transcriptBox" class="muted">No transcript yet.</div>
+            </div>
+
+            <div class="card" id="resultBox">
+                <div><span class="label">Speech Accuracy:</span> <span id="speechScore">-</span></div>
+                <div style="margin-top: 8px;"><span class="label">Mouse Accuracy:</span> <span id="mouseScore">-</span></div>
+                <div style="margin-top: 8px;"><span class="label">Average Accuracy:</span> <span id="avgScore">-</span></div>
+                <div style="margin-top: 8px;"><span class="label">Result:</span> <span id="passFail">-</span></div>
+            </div>
+
+            <div id="keyDisplay"></div>
+            <p id="instructions" style="display:none; font-size: 12px; color: #666; margin-top: 10px; text-align:center;">
+                Copy this key and paste it into the Impulse Guard extension.
+            </p>
+        </div>
+
+        <div class="right-panel">
+            <div class="right-title">Mouse Test Area</div>
+
+            <div id="mousePanelWrap">
+                <canvas id="mouseCanvas" width="900" height="500"></canvas>
+                <div id="mouseCanvasStatus" class="muted">
+                    Blank test area. The mouse test will begin after the speech test.
+                </div>
+                <div id="mouseCanvasAccuracy" class="muted">
+                    Accuracy: 0.0%
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        document.getElementById('submitBtn').addEventListener('click', async () => {
-            const answer = document.getElementById('answerInput').value.trim();
-            const errorMsg = document.getElementById('errorMsg');
-            const keyDisplay = document.getElementById('keyDisplay');
-            const instructions = document.getElementById('instructions');
+        const startBtn = document.getElementById("startBtn");
+        const statusMsg = document.getElementById("statusMsg");
+        const phaseEl = document.getElementById("phase");
+        const sentenceBox = document.getElementById("sentenceBox");
+        const transcriptBox = document.getElementById("transcriptBox");
+        const resultBox = document.getElementById("resultBox");
+        const speechScore = document.getElementById("speechScore");
+        const mouseScore = document.getElementById("mouseScore");
+        const avgScore = document.getElementById("avgScore");
+        const passFail = document.getElementById("passFail");
+        const keyDisplay = document.getElementById("keyDisplay");
+        const instructions = document.getElementById("instructions");
 
-            // 1. THE SOBRIETY TEST
-            if (answer === "42") {
-                // They passed! Hide error, show loading text
-                errorMsg.style.display = "none";
-                keyDisplay.innerText = "Generating key...";
-                keyDisplay.style.color = "#333";
-                instructions.style.display = "none";
+        const mouseCanvas = document.getElementById("mouseCanvas");
+        const mouseCtx = mouseCanvas.getContext("2d");
+        const mouseCanvasStatus = document.getElementById("mouseCanvasStatus");
+        const mouseCanvasAccuracy = document.getElementById("mouseCanvasAccuracy");
 
-                try {
-                    // 2. CALL YOUR SERVER'S /generate ENDPOINT
-                    // (Change this to your live URL once you host it online!)
-                    const response = await fetch('http://78.141.225.168:2600/generate', {
-                        method: 'GET' 
-                    });
-                    
-                    const data = await response.json();
-                    
-                    // 3. DISPLAY THE KEY TO THE USER
-                    keyDisplay.innerText = data.key;
-                    keyDisplay.style.color = "#2ed573";
-                    instructions.style.display = "block";
-                    
-                } catch (error) {
-                    keyDisplay.innerText = "Error connecting to server.";
-                    keyDisplay.style.color = "#ff4757";
-                    console.error(error);
+        let poller = null;
+        let mousePoller = null;
+        let latestMouseState = null;
+        let lastSentMouse = { x: 450, y: 250 };
+
+        function clearCanvas() {
+            mouseCtx.clearRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+            mouseCtx.fillStyle = "black";
+            mouseCtx.fillRect(0, 0, mouseCanvas.width, mouseCanvas.height);
+        }
+
+        function drawMouseGame(state) {
+            if (!state) return;
+
+            clearCanvas();
+
+            const width = mouseCanvas.width;
+            const height = mouseCanvas.height;
+            const points = state.line_points || [];
+
+            if (points.length > 1) {
+                mouseCtx.beginPath();
+                mouseCtx.lineWidth = 3;
+                mouseCtx.strokeStyle = "cyan";
+                mouseCtx.moveTo(points[0].x, points[0].y);
+
+                for (let i = 1; i < points.length; i++) {
+                    mouseCtx.lineTo(points[i].x, points[i].y);
                 }
-            } else {
-                // They failed the test! Show the error message.
-                errorMsg.style.display = "block";
-                keyDisplay.innerText = "";
-                instructions.style.display = "none";
+
+                mouseCtx.stroke();
             }
+
+            const mx = state.mouse_x ?? lastSentMouse.x;
+            const my = state.mouse_y ?? lastSentMouse.y;
+
+            mouseCtx.beginPath();
+            mouseCtx.fillStyle = "white";
+            mouseCtx.arc(mx, my, 6, 0, Math.PI * 2);
+            mouseCtx.fill();
+
+            if (state.status === "paused" && state.pause_text) {
+                mouseCtx.fillStyle = "rgba(0,0,0,0.35)";
+                mouseCtx.fillRect(0, 0, width, height);
+
+                mouseCtx.fillStyle = "yellow";
+                mouseCtx.font = "bold 32px Arial";
+                mouseCtx.textAlign = "center";
+
+                const lines = state.pause_text.split("\n");
+                const startY = height / 2 - ((lines.length - 1) * 20);
+
+                lines.forEach((line, index) => {
+                    mouseCtx.fillText(line, width / 2, startY + (index * 40));
+                });
+            }
+
+            if (state.finished) {
+                mouseCtx.fillStyle = "white";
+                mouseCtx.font = "bold 30px Arial";
+                mouseCtx.textAlign = "center";
+                mouseCtx.fillText(`Final Accuracy: ${Number(state.accuracy || 0).toFixed(1)}%`, width / 2, height / 2);
+            }
+
+            mouseCanvasAccuracy.innerText = `Accuracy: ${Number(state.accuracy || 0).toFixed(1)}%`;
+        }
+
+        async function fetchMouseState() {
+            try {
+                const response = await fetch("/mouse-state");
+                const data = await response.json();
+                latestMouseState = data;
+                drawMouseGame(data);
+            } catch (err) {
+                mouseCanvasStatus.innerText = "Could not fetch mouse game state.";
+            }
+        }
+
+        function startMousePolling() {
+            stopMousePolling();
+            mousePoller = setInterval(fetchMouseState, 50);
+            fetchMouseState();
+        }
+
+        function stopMousePolling() {
+            if (mousePoller) {
+                clearInterval(mousePoller);
+                mousePoller = null;
+            }
+        }
+
+        async function sendMousePosition(x, y) {
+            lastSentMouse = { x, y };
+
+            try {
+                await fetch("/mouse-move", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ x, y })
+                });
+            } catch (err) {
+            }
+        }
+
+        mouseCanvas.addEventListener("mousemove", (event) => {
+            const rect = mouseCanvas.getBoundingClientRect();
+
+            const scaleX = mouseCanvas.width / rect.width;
+            const scaleY = mouseCanvas.height / rect.height;
+
+            const x = (event.clientX - rect.left) * scaleX;
+            const y = (event.clientY - rect.top) * scaleY;
+
+            sendMousePosition(x, y);
         });
+
+        async function startTest() {
+            keyDisplay.innerText = "";
+            instructions.style.display = "none";
+            resultBox.style.display = "none";
+
+            mouseCanvasStatus.innerText = "Waiting for speech test to finish...";
+            mouseCanvasAccuracy.innerText = "Accuracy: 0.0%";
+            clearCanvas();
+            startMousePolling();
+
+            const response = await fetch("/start-test", {
+                method: "POST"
+            });
+
+            const data = await response.json();
+
+            if (!data.ok) {
+                statusMsg.innerText = data.message || "Could not start test.";
+                return;
+            }
+
+            startBtn.disabled = true;
+            statusMsg.innerText = "Test started.";
+            startPolling();
+        }
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch("/status");
+                const data = await response.json();
+
+                phaseEl.innerText = data.phase || "unknown";
+                statusMsg.innerText = data.message || "";
+                sentenceBox.innerText = data.sentence || "No sentence yet.";
+                transcriptBox.innerText = data.transcript || "No transcript yet.";
+
+                if (data.speech_accuracy !== null || data.mouse_accuracy !== null || data.average_accuracy !== null) {
+                    resultBox.style.display = "block";
+                    speechScore.innerText = data.speech_accuracy !== null ? data.speech_accuracy + "%" : "-";
+                    mouseScore.innerText = data.mouse_accuracy !== null ? data.mouse_accuracy + "%" : "-";
+                    avgScore.innerText = data.average_accuracy !== null ? data.average_accuracy + "%" : "-";
+                }
+
+                if (data.phase === "waiting_for_face") {
+                    mouseCanvasStatus.innerText = "Waiting for exactly one face before starting...";
+                } else if (data.phase === "speech") {
+                    mouseCanvasStatus.innerText = "Speech test in progress. The mouse test area will activate next.";
+                } else if (data.phase === "speech_complete") {
+                    mouseCanvasStatus.innerText = "Speech test complete. Mouse test starting shortly...";
+                } else if (data.phase === "mouse") {
+                    mouseCanvasStatus.innerText = "Mouse test is running in this webpage.";
+                } else if (data.phase === "complete") {
+                    mouseCanvasStatus.innerText = "Mouse test finished.";
+                } else if (data.phase === "error") {
+                    mouseCanvasStatus.innerText = "Test error.";
+                }
+
+                if (data.phase === "complete") {
+                    passFail.innerText = data.passed ? "PASSED" : "FAILED";
+                    passFail.className = data.passed ? "pass" : "fail";
+
+                    if (data.passed) {
+                        keyDisplay.innerText = data.key;
+                        instructions.style.display = "block";
+                    } else {
+                        keyDisplay.innerText = "No unlock key issued.";
+                        instructions.style.display = "none";
+                    }
+
+                    stopPolling();
+                    stopMousePolling();
+                    startBtn.disabled = false;
+                }
+
+                if (data.phase === "error") {
+                    passFail.innerText = "ERROR";
+                    passFail.className = "fail";
+                    keyDisplay.innerText = data.error || "An error occurred.";
+                    instructions.style.display = "none";
+                    resultBox.style.display = "block";
+                    stopPolling();
+                    stopMousePolling();
+                    startBtn.disabled = false;
+                }
+
+            } catch (err) {
+                statusMsg.innerText = "Could not fetch status.";
+                mouseCanvasStatus.innerText = "Could not fetch test status.";
+                stopPolling();
+                stopMousePolling();
+                startBtn.disabled = false;
+            }
+        }
+
+        function startPolling() {
+            stopPolling();
+            poller = setInterval(fetchStatus, 1000);
+            fetchStatus();
+        }
+
+        function stopPolling() {
+            if (poller) {
+                clearInterval(poller);
+                poller = null;
+            }
+        }
+
+        clearCanvas();
+        startBtn.addEventListener("click", startTest);
     </script>
 </body>
 </html>
