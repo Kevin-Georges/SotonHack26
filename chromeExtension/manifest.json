@@ -7,8 +7,7 @@
     "storage"
   ],
   "host_permissions": [
-    "http://127.0.0.1:2600/*",
-    "http://localhost:2600/*"
+    "http://78.141.225.168:2600/*"
   ],
   "action": {
     "default_popup": "popup.html",

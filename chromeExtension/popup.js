@@ -7,7 +7,7 @@ document.getElementById('unlockBtn').addEventListener('click', async () => {
 
   try {
     // Talk to the local Python server
-    const response = await fetch('http://127.0.0.1:2600/validate', {
+    const response = await fetch('http://78.141.225.168:2600/validate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
