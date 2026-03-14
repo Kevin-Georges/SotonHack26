@@ -4,6 +4,9 @@ import random
 import asyncio
 import websockets
 import sounddevice as sd
+import tkinter as tk
+import time
+import random
 
 # -------------------------------
 # CONFIG
@@ -144,7 +147,109 @@ async def run():
 
         return " ".join(transcripts)
 
+def run_mouse_game():
+    import tkinter as tk
+    import time
+    import math
 
+    WIDTH = 900
+    HEIGHT = 500
+    DURATION = 10  # seconds
+
+    root = tk.Tk()
+    root.title("Mouse Tracking Challenge")
+
+    canvas = tk.Canvas(root, width=WIDTH, height=HEIGHT, bg="black")
+    canvas.pack()
+
+    meter = tk.Label(root, text="Accuracy: 0.0%", font=("Arial", 14))
+    meter.pack()
+
+    amplitude = HEIGHT / 3
+    center = HEIGHT / 2
+    frequency = 0.02
+    speed = 3
+
+    line_points = []
+    start_time = time.time()
+
+    total_error = 0
+    samples = 0
+
+    def update():
+        nonlocal total_error, samples
+
+        elapsed = time.time() - start_time
+        if elapsed >= DURATION:
+            finish()
+            return
+
+        t = elapsed * 100
+        x = WIDTH
+        y = center + amplitude * math.sin(t * frequency)
+
+        line_points.append((x, y))
+
+        for i in range(len(line_points)):
+            px, py = line_points[i]
+            line_points[i] = (px - speed, py)
+
+        while line_points and line_points[0][0] < 0:
+            line_points.pop(0)
+
+        canvas.delete("line")
+
+        for i in range(len(line_points) - 1):
+            x1, y1 = line_points[i]
+            x2, y2 = line_points[i + 1]
+            canvas.create_line(x1, y1, x2, y2, fill="cyan", width=3, tags="line")
+
+        mouse_x = root.winfo_pointerx() - root.winfo_rootx()
+        mouse_y = root.winfo_pointery() - root.winfo_rooty()
+
+        if line_points:
+            closest = min(line_points, key=lambda p: abs(p[0] - mouse_x))
+            dist = abs(mouse_y - closest[1])
+
+            total_error += dist
+            samples += 1
+
+        canvas.delete("cursor")
+        canvas.create_oval(
+            mouse_x - 5, mouse_y - 5,
+            mouse_x + 5, mouse_y + 5,
+            fill="white",
+            tags="cursor"
+        )
+
+        if samples > 0:
+            avg_error = total_error / samples
+            accuracy = max(0, 100 - avg_error / 2)
+            meter.config(text=f"Accuracy: {accuracy:.1f}%")
+
+        root.after(16, update)
+
+    def finish():
+        canvas.delete("all")
+
+        if samples > 0:
+            avg_error = total_error / samples
+            accuracy = max(0, 100 - avg_error / 2)
+        else:
+            accuracy = 0
+
+        canvas.create_text(
+            WIDTH/2,
+            HEIGHT/2,
+            text=f"Final Accuracy: {accuracy:.1f}%",
+            fill="white",
+            font=("Arial", 30)
+        )
+        # close window after 2 seconds
+        root.after(2000, root.destroy)
+
+    update()
+    root.mainloop()
 # -------------------------------
 # MAIN PROGRAM
 # -------------------------------
@@ -168,6 +273,10 @@ async def main():
     accuracy = calculate_accuracy(sentence, transcript)
 
     print(f"\nAccuracy Score: {accuracy:.2%}")
+
+    print("\nStarting mouse tracking game...\n")
+
+    run_mouse_game()
 
 
 if __name__ == "__main__":
