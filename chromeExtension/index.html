@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Impulse Guard - Sobriety Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 100px; background-color: #f4f4f9;}
+        .container { background: white; border-radius: 12px; padding: 40px; width: 350px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #ff4757; margin-top: 0; }
+        input { padding: 10px; width: 80%; margin: 15px 0; border: 2px solid #ccc; border-radius: 6px; font-size: 16px; text-align: center;}
+        button { background: #3742fa; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; width: 90%;}
+        button:hover { background: #2f35cc; }
+        #keyDisplay { font-size: 22px; font-weight: bold; color: #2ed573; margin-top: 25px; letter-spacing: 2px; }
+        #errorMsg { color: #ff4757; font-weight: bold; display: none; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Sobriety Checkpoint</h2>
+        <p>To get your unlock key, prove you are thinking clearly. What is <b>15 + 27</b>?</p>
+        
+        <input type="text" id="answerInput" placeholder="Enter answer">
+        <button id="submitBtn">Submit Answer</button>
+        
+        <p id="errorMsg">Wrong! Put the credit card down.</p>
+        
+        <div id="keyDisplay"></div>
+        <p id="instructions" style="display:none; font-size: 12px; color: #666; margin-top: 10px;">
+            Copy this key and paste it into the Impulse Guard extension! (Expires in 5 mins)
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const answer = document.getElementById('answerInput').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const keyDisplay = document.getElementById('keyDisplay');
+            const instructions = document.getElementById('instructions');
+
+            // 1. THE SOBRIETY TEST
+            if (answer === "42") {
+                // They passed! Hide error, show loading text
+                errorMsg.style.display = "none";
+                keyDisplay.innerText = "Generating key...";
+                keyDisplay.style.color = "#333";
+                instructions.style.display = "none";
+
+                try {
+                    // 2. CALL YOUR SERVER'S /generate ENDPOINT
+                    // (Change this to your live URL once you host it online!)
+                    const response = await fetch('http://127.0.0.1:2600/generate', {
+                        method: 'GET' 
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // 3. DISPLAY THE KEY TO THE USER
+                    keyDisplay.innerText = data.key;
+                    keyDisplay.style.color = "#2ed573";
+                    instructions.style.display = "block";
+                    
+                } catch (error) {
+                    keyDisplay.innerText = "Error connecting to server.";
+                    keyDisplay.style.color = "#ff4757";
+                    console.error(error);
+                }
+            } else {
+                // They failed the test! Show the error message.
+                errorMsg.style.display = "block";
+                keyDisplay.innerText = "";
+                instructions.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
